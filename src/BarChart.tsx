@@ -4,18 +4,18 @@ import { SeriesPoint } from '@visx/shape/lib/types';
 import { Group } from '@visx/group';
 import { Grid } from '@visx/grid';
 import { AxisBottom } from '@visx/axis';
-import cityTemperature, { CityTemperature } from '@visx/mock-data/lib/mocks/cityTemperature';
+import covidCases, { CovidCase } from './CovidCase';
 import { scaleBand, scaleLinear, scaleOrdinal } from '@visx/scale';
 import { timeParse, timeFormat } from 'd3-time-format';
 import { useTooltip, useTooltipInPortal, defaultStyles } from '@visx/tooltip';
 import { LegendOrdinal } from '@visx/legend';
 import { localPoint } from '@visx/event';
 
-type CityName = 'New York' | 'San Francisco' | 'Austin';
+type SchoolType = 'Elementary' | 'Middle' | 'High' | 'Other';
 
 type TooltipData = {
-  bar: SeriesPoint<CityTemperature>;
-  key: CityName;
+  bar: SeriesPoint<CovidCase>;
+  key: SchoolType;
   index: number;
   height: number;
   width: number;
@@ -43,12 +43,13 @@ const tooltipStyles = {
   color: 'white',
 };
 
-const data = cityTemperature.slice(0, 12);
-const keys = Object.keys(data[0]).filter(d => d !== 'date') as CityName[];
+// SUBSET HERE
+const data = covidCases;
+const keys = Object.keys(data[0]).filter(d => d !== 'date') as SchoolType[];
 
 const temperatureTotals = data.reduce((allTotals, currentDate) => {
   const totalTemperature = keys.reduce((dailyTotal, k) => {
-    dailyTotal += Number(currentDate[k]);
+    dailyTotal += currentDate[k];
     return dailyTotal;
   }, 0);
   allTotals.push(totalTemperature);
@@ -60,7 +61,7 @@ const format = timeFormat('%b %d');
 const formatDate = (date: string) => format(parseDate(date) as Date);
 
 // accessors
-const getDate = (d: CityTemperature) => d.date;
+const getDate = (d: CovidCase) => d.date;
 
 // scales
 const dateScale = scaleBand<string>({
@@ -71,7 +72,7 @@ const temperatureScale = scaleLinear<number>({
   domain: [0, Math.max(...temperatureTotals)],
   nice: true,
 });
-const colorScale = scaleOrdinal<CityName, string>({
+const colorScale = scaleOrdinal<SchoolType, string>({
   domain: keys,
   range: [purple1, purple2, purple3],
 });
@@ -124,7 +125,7 @@ export default function Example({
           xOffset={dateScale.bandwidth() / 2}
         />
         <Group top={margin.top}>
-          <BarStack<CityTemperature, CityName>
+          <BarStack<CovidCase, SchoolType>
             data={data}
             keys={keys}
             x={getDate}
@@ -200,7 +201,7 @@ export default function Example({
           <div style={{ color: colorScale(tooltipData.key) }}>
             <strong>{tooltipData.key}</strong>
           </div>
-          <div>{tooltipData.bar.data[tooltipData.key]}℉</div>
+          <div>{tooltipData.bar.data[tooltipData.key]} cases</div>
           <div>
             <small>{formatDate(getDate(tooltipData.bar.data))}</small>
           </div>
